@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Newton's Rings — Virtual Physics Lab</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div id="view-lab-newton" class="page-view">
+
+  <!-- Header -->
+  <header class="newton-header">
+    <div class="newton-header-inner">
+      <div class="newton-logo">
+        <div class="newton-logo-icon">⬤</div>
+        <div>
+          <div class="newton-lab-title">NEWTON'S RINGS</div>
+          <div class="newton-lab-sub">Virtual Optical Interference Lab</div>
+        </div>
+      </div>
+      <div class="newton-status-bar">
+        <span class="newton-status-dot" id="newton-status-dot"></span>
+        <span id="newton-status-text" class="newton-status-text">READY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <nav class="newton-tabs">
+    <button class="newton-tab active" data-tab="newton-tab-simulation">
+      <span class="newton-tab-icon">◈</span> Simulation
+    </button>
+    <button class="newton-tab" data-tab="newton-tab-microscope">
+      <span class="newton-tab-icon">⊕</span> Microscope
+    </button>
+    <button class="newton-tab" data-tab="newton-tab-table">
+      <span class="newton-tab-icon">▦</span> Observation Table
+    </button>
+    <button class="newton-tab" data-tab="newton-tab-graph">
+      <span class="newton-tab-icon">↗</span> Graph
+    </button>
+    <button class="newton-tab" data-tab="newton-tab-calc">
+      <span class="newton-tab-icon">∑</span> Calculations
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════ TAB: SIMULATION ═══ -->
+  <div id="newton-tab-simulation" class="newton-tab-panel active">
+    <div class="newton-sim-layout">
+
+      <!-- Canvas Panel -->
+      <div class="glass newton-canvas-panel">
+        <div class="newton-panel-label">INTERFERENCE PATTERN</div>
+        <div class="newton-canvas-wrap">
+          <canvas id="newton-canvas" width="480" height="480"></canvas>
+          <div class="newton-canvas-overlay" id="newton-canvas-overlay">
+            <span>SIMULATION PAUSED</span>
+          </div>
+        </div>
+        <div class="newton-sim-btns">
+          <button class="btn-primary" id="newton-btn-start" aria-label="Start simulation">▶ START</button>
+          <button class="btn-ghost" id="newton-btn-pause" aria-label="Pause simulation" disabled>⏸ PAUSE</button>
+          <button class="btn-ghost" id="newton-btn-reset-sim" aria-label="Reset simulation">↺ RESET</button>
+        </div>
+      </div>
+
+      <!-- Controls Panel -->
+      <div class="newton-controls-col">
+
+        <div class="glass newton-control-card">
+          <div class="newton-panel-label">LIGHT SOURCE</div>
+          <div class="newton-slider-group">
+            <label for="newton-wavelength-slider">
+              Wavelength (λ)
+              <span class="newton-slider-val" id="newton-wavelength-val">589 nm</span>
+            </label>
+            <input type="range" id="newton-wavelength-slider" class="newton-slider"
+              min="400" max="700" value="589" step="1"
+              aria-label="Wavelength slider" />
+            <div class="newton-slider-track-labels">
+              <span>400 nm</span><span>Violet→Red</span><span>700 nm</span>
+            </div>
+            <div class="newton-color-preview" id="newton-color-preview"></div>
+          </div>
+        </div>
+
+        <div class="glass newton-control-card">
+          <div class="newton-panel-label">OPTICS</div>
+          <div class="newton-slider-group">
+            <label for="newton-radius-slider">
+              Radius of Curvature (R)
+              <span class="newton-slider-val" id="newton-radius-val">100 cm</span>
+            </label>
+            <input type="range" id="newton-radius-slider" class="newton-slider"
+              min="50" max="200" value="100" step="1"
+              aria-label="Radius of curvature slider" />
+          </div>
+          <div class="newton-slider-group" style="margin-top:16px">
+            <label for="newton-focus-slider">
+              Microscope Focus
+              <span class="newton-slider-val" id="newton-focus-val">5.0</span>
+            </label>
+            <input type="range" id="newton-focus-slider" class="newton-slider"
+              min="1" max="10" value="5" step="0.1"
+              aria-label="Focus slider" />
+          </div>
+        </div>
+
+        <div class="glass newton-control-card newton-readout-card">
+          <div class="newton-panel-label">LIVE PARAMETERS</div>
+          <div class="newton-readouts">
+            <div class="newton-readout">
+              <div class="newton-readout-label">λ (Wavelength)</div>
+              <div class="newton-readout-val" id="newton-ro-lambda">589 nm</div>
+            </div>
+            <div class="newton-readout">
+              <div class="newton-readout-label">R (Radius)</div>
+              <div class="newton-readout-val" id="newton-ro-radius">100 cm</div>
+            </div>
+            <div class="newton-readout">
+              <div class="newton-readout-label">Ring Count</div>
+              <div class="newton-readout-val" id="newton-ro-rings">15</div>
+            </div>
+            <div class="newton-readout">
+              <div class="newton-readout-label">D₁ (Diameter)</div>
+              <div class="newton-readout-val" id="newton-ro-d1">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass newton-control-card">
+          <div class="newton-panel-label">RING INSPECTOR</div>
+          <div class="newton-ring-inspect" id="newton-ring-inspect">
+            <div class="newton-ring-row" id="newton-ring-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB: MICROSCOPE ═══ -->
+  <div id="newton-tab-microscope" class="newton-tab-panel">
+    <div class="newton-micro-layout">
+
+      <!-- Microscope View -->
+      <div class="glass newton-micro-main">
+        <div class="newton-panel-label">TRAVELLING MICROSCOPE — EYEPIECE VIEW</div>
+        <div class="newton-eyepiece-wrap">
+          <canvas id="newton-eyepiece" width="400" height="400"></canvas>
+          <div class="newton-crosshair-v"></div>
+          <div class="newton-crosshair-h"></div>
+        </div>
+
+        <!-- Scale readout -->
+        <div class="newton-scale-display">
+          <div class="newton-scale-block">
+            <div class="newton-scale-label">MAIN SCALE</div>
+            <div class="newton-scale-val" id="newton-ms-val">12.50 mm</div>
+          </div>
+          <div class="newton-scale-sep">+</div>
+          <div class="newton-scale-block">
+            <div class="newton-scale-label">VERNIER</div>
+            <div class="newton-scale-val" id="newton-vs-val">0.08 mm</div>
+          </div>
+          <div class="newton-scale-sep">=</div>
+          <div class="newton-scale-block">
+            <div class="newton-scale-label">TOTAL READING</div>
+            <div class="newton-scale-val newton-scale-total" id="newton-total-val">12.58 mm</div>
+          </div>
+        </div>
+
+        <!-- Movement controls -->
+        <div class="newton-move-controls">
+          <button class="newton-move-btn" id="newton-move-ll" aria-label="Move left large">◀◀</button>
+          <button class="newton-move-btn" id="newton-move-l" aria-label="Move left">◀</button>
+          <div class="newton-move-fine">
+            <input type="range" id="newton-micro-slider" class="newton-slider"
+              min="0" max="2400" value="1200" step="1"
+              aria-label="Microscope position" />
+          </div>
+          <button class="newton-move-btn" id="newton-move-r" aria-label="Move right">▶</button>
+          <button class="newton-move-btn" id="newton-move-rr" aria-label="Move right large">▶▶</button>
+        </div>
+      </div>
+
+      <!-- Record Panel -->
+      <div class="newton-micro-side">
+        <div class="glass newton-micro-record">
+          <div class="newton-panel-label">RECORD READINGS</div>
+
+          <div class="newton-record-form">
+            <div class="newton-form-row">
+              <label for="newton-obs-ring">Ring No.</label>
+              <select id="newton-obs-ring" class="newton-select">
+                <option value="1">Ring 1</option>
+                <option value="2">Ring 2</option>
+                <option value="3">Ring 3</option>
+                <option value="4">Ring 4</option>
+                <option value="5">Ring 5</option>
+                <option value="6">Ring 6</option>
+                <option value="7">Ring 7</option>
+                <option value="8">Ring 8</option>
+                <option value="9">Ring 9</option>
+                <option value="10">Ring 10</option>
+              </select>
+            </div>
+
+            <div class="newton-form-row">
+              <label>Side</label>
+              <div class="newton-radio-group">
+                <label class="newton-radio"><input type="radio" name="newton-side" value="left" checked /> Left (x₁)</label>
+                <label class="newton-radio"><input type="radio" name="newton-side" value="right" /> Right (x₂)</label>
+              </div>
+            </div>
+
+            <div class="newton-form-row">
+              <label>Current Reading</label>
+              <div class="newton-reading-display" id="newton-current-reading">12.58 mm</div>
+            </div>
+
+            <button class="btn-primary" id="newton-btn-record-reading" aria-label="Record reading">
+              ⊕ RECORD READING
+            </button>
+
+            <div class="newton-recorded-preview" id="newton-recorded-preview">
+              <div class="newton-panel-label" style="margin-top:0">RECORDED</div>
+              <div id="newton-recorded-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass newton-micro-tips">
+          <div class="newton-panel-label">PROCEDURE</div>
+          <ol class="newton-tip-list">
+            <li>Select ring number to measure</li>
+            <li>Move microscope to left tangent of ring</li>
+            <li>Select "Left" and record x₁</li>
+            <li>Move to right tangent of same ring</li>
+            <li>Select "Right" and record x₂</li>
+            <li>Repeat for all 10 rings</li>
+            <li>Switch to <strong>Observation Table</strong> tab</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB: TABLE ═══ -->
+  <div id="newton-tab-table" class="newton-tab-panel">
+    <div class="glass newton-table-panel">
+      <div class="newton-table-header-row">
+        <div class="newton-panel-label">OBSERVATION TABLE</div>
+        <div class="newton-table-actions">
+          <button class="btn-primary" id="newton-btn-auto-fill" aria-label="Auto fill table">⚡ AUTO-FILL</button>
+          <button class="btn-ghost" id="newton-btn-reset-table" aria-label="Reset table">↺ RESET TABLE</button>
+        </div>
+      </div>
+
+      <div class="newton-table-scroll">
+        <table class="newton-table" id="newton-obs-table">
+          <thead>
+            <tr>
+              <th>Obs #</th>
+              <th>Ring n</th>
+              <th>Left Reading x₁ (mm)</th>
+              <th>Right Reading x₂ (mm)</th>
+              <th>Diameter Dₙ (mm)</th>
+              <th>Dₙ² (mm²)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="newton-table-body">
+            <!-- rows generated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="newton-table-footer">
+        <div class="newton-table-stats">
+          <span id="newton-table-valid-count" class="newton-stat-chip">0 / 10 valid</span>
+          <span id="newton-table-completeness" class="newton-stat-chip">0% complete</span>
+        </div>
+        <button class="btn-primary" id="newton-btn-plot" aria-label="Plot graph">📈 PLOT GRAPH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB: GRAPH ═══ -->
+  <div id="newton-tab-graph" class="newton-tab-panel">
+    <div class="newton-graph-layout">
+      <div class="glass newton-graph-main">
+        <div class="newton-panel-label">Dₙ² vs n — LINEAR GRAPH</div>
+        <div class="newton-chart-wrap">
+          <canvas id="newton-chart" height="400"></canvas>
+        </div>
+        <div class="newton-graph-stats" id="newton-graph-stats">
+          <div class="newton-graph-stat">
+            <div class="newton-graph-stat-label">Slope (m)</div>
+            <div class="newton-graph-stat-val" id="newton-graph-slope">—</div>
+          </div>
+          <div class="newton-graph-stat">
+            <div class="newton-graph-stat-label">Intercept</div>
+            <div class="newton-graph-stat-val" id="newton-graph-intercept">—</div>
+          </div>
+          <div class="newton-graph-stat">
+            <div class="newton-graph-stat-label">R² Fit</div>
+            <div class="newton-graph-stat-val" id="newton-graph-r2">—</div>
+          </div>
+          <div class="newton-graph-stat">
+            <div class="newton-graph-stat-label">Data Points</div>
+            <div class="newton-graph-stat-val" id="newton-graph-points">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass newton-graph-side">
+        <div class="newton-panel-label">GRAPH LEGEND</div>
+        <div class="newton-legend-item"><span class="newton-legend-dot cyan"></span> Measured Dₙ²</div>
+        <div class="newton-legend-item"><span class="newton-legend-dot orange"></span> Best-fit Line</div>
+        <div class="newton-panel-label" style="margin-top:20px">FORMULA</div>
+        <div class="newton-formula-box">
+          Dₙ² = 4λR · n
+          <hr class="newton-formula-sep"/>
+          Slope = 4λR
+          <hr class="newton-formula-sep"/>
+          R = Slope / (4λ)
+        </div>
+        <div class="newton-panel-label" style="margin-top:20px">NOTES</div>
+        <ul class="newton-tip-list">
+          <li>Graph must pass through origin</li>
+          <li>Linearity validates experiment</li>
+          <li>R² > 0.99 is excellent</li>
+          <li>Slope gives R directly</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB: CALCULATIONS ═══ -->
+  <div id="newton-tab-calc" class="newton-tab-panel">
+    <div class="newton-calc-layout">
+
+      <div class="glass newton-calc-panel">
+        <div class="newton-panel-label">CALCULATION ENGINE</div>
+        <button class="btn-primary" id="newton-btn-calculate" aria-label="Run calculations">
+          ⚙ RUN CALCULATIONS
+        </button>
+
+        <div id="newton-calc-steps" class="newton-calc-steps">
+          <div class="newton-calc-placeholder">
+            Click "RUN CALCULATIONS" after filling the observation table to see step-by-step derivation.
+          </div>
+        </div>
+      </div>
+
+      <div class="newton-calc-side">
+        <div class="glass newton-result-panel" id="newton-result-panel">
+          <div class="newton-panel-label">RESULT</div>
+          <div class="newton-result-display" id="newton-result-display">
+            <div class="newton-result-placeholder">Complete observations first</div>
+          </div>
+        </div>
+
+        <div class="glass newton-given-panel">
+          <div class="newton-panel-label">GIVEN DATA</div>
+          <div class="newton-given-grid">
+            <div class="newton-given-row">
+              <span>Wavelength (λ)</span>
+              <span id="newton-given-lambda" class="newton-given-val">589 nm</span>
+            </div>
+            <div class="newton-given-row">
+              <span>λ in mm</span>
+              <span class="newton-given-val">5.89 × 10⁻⁴ mm</span>
+            </div>
+            <div class="newton-given-row">
+              <span>Set R (slider)</span>
+              <span id="newton-given-radius" class="newton-given-val">100 cm</span>
+            </div>
+            <div class="newton-given-row">
+              <span>Formula</span>
+              <span class="newton-given-val">R = m / 4λ</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass newton-error-panel" id="newton-error-panel" style="display:none">
+          <div class="newton-panel-label error-label">⚠ WARNINGS</div>
+          <div id="newton-error-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end #view-lab-newton -->
+
+<script src="script.js"></script>
+<script>
+  // Boot
+  document.addEventListener('DOMContentLoaded', function() {
+    initNewtonsLab();
+  });
+</script>
+</body>
+</html>
