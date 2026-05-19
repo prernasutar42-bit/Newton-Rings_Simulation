@@ -260,17 +260,6 @@ function initNewtonsLab() {
     simCtx.fillStyle = 'rgba(6,182,212,0.6)';
     simCtx.beginPath(); simCtx.arc(CX,CY,2.5,0,Math.PI*2); simCtx.fill();
 
-    // Ring number labels at dark ring positions
-    simCtx.font = '10px JetBrains Mono, monospace';
-    simCtx.fillStyle = 'rgba(6,182,212,0.5)';
-    simCtx.textAlign = 'center';
-    for (let n = 1; n <= 15; n++) {
-      const rpx2 = ringRadius(n) * pxPerMm;
-      if (rpx2 > MAXR_PX + 10) break;
-      if (rpx2 > MAXR_PX) continue;
-      simCtx.fillText(n, CX + rpx2*0.707 + 5, CY - rpx2*0.707 - 3);
-    }
-
     // Crosshair
     simCtx.strokeStyle = 'rgba(6,182,212,0.07)';
     simCtx.lineWidth = 1; simCtx.setLineDash([4,6]);
@@ -390,21 +379,46 @@ function initNewtonsLab() {
       const rightEdge = cxRing + rn_px;
       if (rightEdge < 0 || leftEdge > EW) continue;
 
-      const amp = Math.exp(-n * 0.06);
+      const amp = Math.exp(-n * 0.055);
 
-      // Bright annulus between dark rings
+      // ── Bright annulus fill ──────────────────────────
       if (n > 1 && rp_px > 0) {
         eyeCtx.beginPath();
         eyeCtx.arc(cxRing, ECY, rn_px, 0, Math.PI*2);
         eyeCtx.arc(cxRing, ECY, rp_px, 0, Math.PI*2, true);
-        eyeCtx.fillStyle = `rgba(${wr},${wg},${wb},${amp*0.32})`;
+        eyeCtx.fillStyle = `rgba(${wr},${wg},${wb},${amp*0.55})`;
         eyeCtx.fill('evenodd');
       }
 
-      // Dark ring stroke
+      // ── Wide soft glow halo (outermost — blurry spread) ──
+      if (n > 1 && rp_px > 0) {
+        const midR      = (rn_px + rp_px) / 2;
+        const bandWidth = rn_px - rp_px;
+        eyeCtx.beginPath(); eyeCtx.arc(cxRing, ECY, midR, 0, Math.PI*2);
+        eyeCtx.strokeStyle = `rgba(${wr},${wg},${wb},${amp*0.18})`;
+        eyeCtx.lineWidth   = bandWidth * 3.2;
+        eyeCtx.stroke();
+
+        // Medium glow
+        eyeCtx.beginPath(); eyeCtx.arc(cxRing, ECY, midR, 0, Math.PI*2);
+        eyeCtx.strokeStyle = `rgba(${wr},${wg},${wb},${amp*0.30})`;
+        eyeCtx.lineWidth   = bandWidth * 1.6;
+        eyeCtx.stroke();
+      }
+
+      // ── Crisp bright inner rim (peak intensity edge) ──
+      if (n > 1 && rp_px > 0) {
+        const rimR = rp_px + (rn_px - rp_px) * 0.25;
+        eyeCtx.beginPath(); eyeCtx.arc(cxRing, ECY, rimR, 0, Math.PI*2);
+        eyeCtx.strokeStyle = `rgba(${wr},${wg},${wb},${Math.min(0.95, amp*1.1)})`;
+        eyeCtx.lineWidth   = Math.max(1, 2.5 * amp);
+        eyeCtx.stroke();
+      }
+
+      // ── Dark ring on top (keeps fringes sharp) ──────
       eyeCtx.beginPath(); eyeCtx.arc(cxRing, ECY, rn_px, 0, Math.PI*2);
-      eyeCtx.strokeStyle = 'rgba(0,0,0,0.92)';
-      eyeCtx.lineWidth   = Math.max(1.2, 3.5*(1-n*0.045));
+      eyeCtx.strokeStyle = 'rgba(0,0,0,0.94)';
+      eyeCtx.lineWidth   = Math.max(1.5, 4*(1-n*0.04));
       eyeCtx.stroke();
     }
 
